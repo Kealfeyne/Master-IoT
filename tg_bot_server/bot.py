@@ -1,16 +1,19 @@
 import os
 import logging
+import sqlite3
+
 from aiogram import Bot, Dispatcher, types, F
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime
-import sqlite3
-from db import init_db, is_admin, get_unread_messages_count, register_user
+
 from api import send_count, send_notification
+from db import init_db, is_admin, get_unread_messages_count, register_user
 
 ADMIN_ID = os.getenv('ADMIN_ID')
 API_TOKEN = os.getenv('API_TOKEN')
@@ -23,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Инициализация бота
-bot = Bot(token=API_TOKEN, parse_mode=ParseMode.HTML)
+bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 storage = MemoryStorage()
 dp = Dispatcher(bot=bot, storage=storage)
 
@@ -197,7 +200,7 @@ async def process_admin_reply(message: types.Message, state: FSMContext):
         conn.commit()
         conn.close()
         
-        send_count()
+        send_count(LOCALHOST, PORT)
 
         await message.answer("Ответ отправлен пользователю!", reply_markup=admin_keyboard)
         
@@ -287,8 +290,8 @@ async def save_user_message(message: types.Message):
         except Exception as e:
             logger.error(f"Ошибка при отправке уведомления администратору {admin[0]}: {e}")
     
-    send_notification()
-    send_count()
+    send_notification(LOCALHOST, PORT)
+    send_count(LOCALHOST, PORT)
 
     await message.answer("Ваше сообщение отправлено администратору. Ожидайте ответа.", reply_markup=user_keyboard)
 
